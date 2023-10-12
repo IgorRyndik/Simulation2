@@ -4,7 +4,7 @@ globals [ max-sheep ]  ; don't let the sheep population grow too large
 breed [ sheep a-sheep ]  ; sheep is its own plural, so we use "a-sheep" as the singular
 breed [ wolves wolf ]
 
-turtles-own [ energy ]       ; both wolves and sheep have energy
+turtles-own [ energy satiety ]       ; both wolves and sheep have energy
 
 patches-own [ countdown ]    ; this is for the sheep-wolves-grass model version
 
@@ -54,8 +54,12 @@ to go
   if not any? turtles [ stop ]
   ; stop the model if there are no wolves and the number of sheep gets very large
   if not any? wolves and count sheep > max-sheep [ user-message "The sheep have inherited the earth" stop ]
+
+  ; Enforce the condition before wolf movement
+  enforce-one-wolf-per-patch
+
   ask sheep [
-    move
+    move-sheep
 
     ; in this version, sheep eat grass, grass grows, and it costs sheep energy to move
     if model-version = "sheep-wolves-grass" [
@@ -67,11 +71,12 @@ to go
     reproduce-sheep  ; sheep reproduce at a random rate governed by a slider
   ]
   ask wolves [
-    move
+    move-wolf
     set energy energy - 1  ; wolves lose energy as they move
     eat-sheep ; wolves eat a sheep on their patch
     death ; wolves die if they run out of energy
     reproduce-wolves ; wolves reproduce at a random rate governed by a slider
+    if satiety > 0 [ set satiety satiety - 1 ] ; Decrease satiety over time
   ]
 
   if model-version = "sheep-wolves-grass" [ ask patches [ grow-grass ] ]
@@ -109,10 +114,16 @@ to reproduce-wolves  ; wolf procedure
 end
 
 to eat-sheep  ; wolf procedure
-  let prey one-of sheep-here                    ; grab a random sheep
-  if prey != nobody  [                          ; did we get one? if so,
-    ask prey [ die ]                            ; kill it, and...
-    set energy energy + wolf-gain-from-food     ; get energy from eating
+  if satiety <= wolf-satiety-threshold [
+    let prey one-of sheep-here                    ; grab a random sheep
+    if prey != nobody  [                          ; did we get one? if so,
+      ask prey [ die ]                            ; kill it, and...
+      set energy energy + wolf-gain-from-food     ; get energy from eating
+      let satietyForSheep random (50 - 30 + 1) + 30
+      set satiety satiety + satietyForSheep       ; increase satiety when eating a sheep
+      if satiety > 100
+        [set satiety 100]
+    ]
   ]
 end
 
@@ -147,6 +158,60 @@ to display-labels
   ]
 end
 
+to move-wolf  ; wolf move procedure
+  print satiety
+  ; check if there are any sheep or wolfs in near 3 patch
+  let has-sheep-neighbor any? sheep in-radius 5
+  let has-wolves-neighbor any? other wolves in-radius 5
+
+  ; if there is any sheep neighbor need to move in her direction
+  if has-sheep-neighbor [
+    ; get the closest sheep and move
+    let closest-sheep min-one-of sheep in-radius 5 [distance myself]
+    face closest-sheep
+    fd 1
+    stop
+  ]
+  if not has-wolves-neighbor [
+    ; if there are any sheep and wolves nearby move random
+    move
+    stop
+  ]
+  if has-wolves-neighbor [
+    ; get the closest wolf and move in opposite direction
+    let closest-wolf min-one-of other wolves in-radius 5 [distance myself]
+    move-opposite closest-wolf
+  ]
+end
+
+to move-sheep  ; sheep move procedure
+  ; check if there are any wolfs in near 3 patch
+  let has-wolves-neighbor any? wolves in-radius 3
+  ifelse has-wolves-neighbor [
+    ; get the closest wolf and move in opposite direction
+    let closest-wolf min-one-of wolves in-radius 3 [distance myself]
+    move-opposite closest-wolf
+  ]
+  ; if there is no wolf nearby move random
+  [
+    move
+  ]
+end
+
+to move-opposite [target-turtle]
+  let angle towards target-turtle
+  set heading (angle + 180)
+  fd 1  ; Move forward by 1 unit in the opposite direction
+end
+
+to enforce-one-wolf-per-patch
+  ask wolves [
+    if any? other wolves-here [
+      ; if there is more than one wolf on the same patch, remove one of them
+      ask one-of other wolves-here [ die ]
+    ]
+  ]
+end
 
 ; Copyright 1997 Uri Wilensky.
 ; See Info tab for full copyright and license.
@@ -232,7 +297,7 @@ initial-number-wolves
 initial-number-wolves
 0
 250
-50.0
+60.0
 1
 1
 NIL
@@ -262,7 +327,7 @@ wolf-reproduce
 wolf-reproduce
 0.0
 20.0
-5.0
+20.0
 1.0
 1
 %
@@ -391,9 +456,9 @@ Wolf settings
 0
 
 SWITCH
-105
+5
 270
-241
+141
 303
 show-energy?
 show-energy?
@@ -410,6 +475,21 @@ model-version
 model-version
 "sheep-wolves" "sheep-wolves-grass"
 0
+
+SLIDER
+185
+270
+345
+303
+wolf-satiety-threshold
+wolf-satiety-threshold
+0
+100
+40.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -839,7 +919,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.2
+NetLogo 6.3.0
 @#$#@#$#@
 set model-version "sheep-wolves-grass"
 set show-energy? false
