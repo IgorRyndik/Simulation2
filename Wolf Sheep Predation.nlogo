@@ -4,7 +4,7 @@ globals [ max-sheep ]  ; don't let the sheep population grow too large
 breed [ sheep a-sheep ]  ; sheep is its own plural, so we use "a-sheep" as the singular
 breed [ wolves wolf ]
 
-turtles-own [ energy satiety ]       ; both wolves and sheep have energy
+turtles-own [ energy ]       ; both wolves and sheep have energy
 
 patches-own [ countdown ]    ; this is for the sheep-wolves-grass model version
 
@@ -76,7 +76,6 @@ to go
     eat-sheep ; wolves eat a sheep on their patch
     death ; wolves die if they run out of energy
     reproduce-wolves ; wolves reproduce at a random rate governed by a slider
-    if satiety > 0 [ set satiety satiety - 1 ] ; Decrease satiety over time
   ]
 
   if model-version = "sheep-wolves-grass" [ ask patches [ grow-grass ] ]
@@ -114,15 +113,11 @@ to reproduce-wolves  ; wolf procedure
 end
 
 to eat-sheep  ; wolf procedure
-  if satiety <= wolf-satiety-threshold [
+  if random-float 100 < wolf-satiety-threshold [
     let prey one-of sheep-here                    ; grab a random sheep
     if prey != nobody  [                          ; did we get one? if so,
       ask prey [ die ]                            ; kill it, and...
       set energy energy + wolf-gain-from-food     ; get energy from eating
-      let satietyForSheep random (50 - 30 + 1) + 30
-      set satiety satiety + satietyForSheep       ; increase satiety when eating a sheep
-      if satiety > 100
-        [set satiety 100]
     ]
   ]
 end
@@ -161,13 +156,13 @@ end
 to move-wolf  ; wolf move procedure
   print satiety
   ; check if there are any sheep or wolfs in near 3 patch
-  let has-sheep-neighbor any? sheep in-radius 5
-  let has-wolves-neighbor any? other wolves in-radius 5
+  let has-sheep-neighbor any? sheep in-radius 3
+  let has-wolves-neighbor any? other wolves in-radius 3
 
   ; if there is any sheep neighbor need to move in her direction
   if has-sheep-neighbor [
     ; get the closest sheep and move
-    let closest-sheep min-one-of sheep in-radius 5 [distance myself]
+    let closest-sheep min-one-of sheep in-radius 3 [distance myself]
     face closest-sheep
     fd 1
     stop
@@ -179,7 +174,7 @@ to move-wolf  ; wolf move procedure
   ]
   if has-wolves-neighbor [
     ; get the closest wolf and move in opposite direction
-    let closest-wolf min-one-of other wolves in-radius 5 [distance myself]
+    let closest-wolf min-one-of other wolves in-radius 3 [distance myself]
     move-opposite closest-wolf
   ]
 end
