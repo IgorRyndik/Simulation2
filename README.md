@@ -28,7 +28,7 @@ to move  ; turtle procedure
   lt random 50
   fd 1
 end
-<pre>
+</pre>
 було додано нову процедуру переміщення вовків:
 <pre>
 ask wolves [
