@@ -154,37 +154,35 @@ to display-labels
 end
 
 to move-wolf  ; wolf move procedure
-  print satiety
   ; check if there are any sheep or wolfs in near 3 patch
-  let has-sheep-neighbor any? sheep in-radius 3
-  let has-wolves-neighbor any? other wolves in-radius 3
+  let has-sheep-neighbor any? sheep in-radius 1
+  let has-wolves-neighbor any? other wolves in-radius 1
 
   ; if there is any sheep neighbor need to move in her direction
   if has-sheep-neighbor [
     ; get the closest sheep and move
-    let closest-sheep min-one-of sheep in-radius 3 [distance myself]
+    let closest-sheep min-one-of sheep in-radius 1 [distance myself]
     face closest-sheep
     fd 1
     stop
   ]
-  if not has-wolves-neighbor [
+  ifelse not has-wolves-neighbor [
     ; if there are any sheep and wolves nearby move random
     move
-    stop
   ]
-  if has-wolves-neighbor [
+  [
     ; get the closest wolf and move in opposite direction
-    let closest-wolf min-one-of other wolves in-radius 3 [distance myself]
+    let closest-wolf min-one-of other wolves in-radius 1 [distance myself]
     move-opposite closest-wolf
   ]
 end
 
 to move-sheep  ; sheep move procedure
   ; check if there are any wolfs in near 3 patch
-  let has-wolves-neighbor any? wolves in-radius 3
+  let has-wolves-neighbor any? wolves in-radius 1
   ifelse has-wolves-neighbor [
     ; get the closest wolf and move in opposite direction
-    let closest-wolf min-one-of wolves in-radius 3 [distance myself]
+    let closest-wolf min-one-of wolves in-radius 1 [distance myself]
     move-opposite closest-wolf
   ]
   ; if there is no wolf nearby move random
@@ -201,9 +199,9 @@ end
 
 to enforce-one-wolf-per-patch
   ask wolves [
-    if any? other wolves-here [
-      ; if there is more than one wolf on the same patch, remove one of them
-      ask one-of other wolves-here [ die ]
+    if count wolves-here = 2 [
+      ; if there are exactly two wolves on the same patch, remove one of them
+      ask one-of wolves-here [ die ]
     ]
   ]
 end
@@ -239,9 +237,9 @@ ticks
 30.0
 
 SLIDER
-5
+10
 60
-179
+184
 93
 initial-number-sheep
 initial-number-sheep
@@ -292,7 +290,7 @@ initial-number-wolves
 initial-number-wolves
 0
 250
-60.0
+50.0
 1
 1
 NIL
@@ -322,7 +320,7 @@ wolf-reproduce
 wolf-reproduce
 0.0
 20.0
-20.0
+5.0
 1.0
 1
 %
@@ -469,7 +467,7 @@ CHOOSER
 model-version
 model-version
 "sheep-wolves" "sheep-wolves-grass"
-0
+1
 
 SLIDER
 185
@@ -480,7 +478,7 @@ wolf-satiety-threshold
 wolf-satiety-threshold
 0
 100
-40.0
+69.0
 1
 1
 NIL
