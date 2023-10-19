@@ -22,6 +22,13 @@ ask wolves [
     ; code was simplified
   ]
 </pre>
+<pre>
+to move  ; turtle procedure
+  rt random 50
+  lt random 50
+  fd 1
+end
+<pre>
 було додано нову процедуру переміщення вовків:
 <pre>
 ask wolves [
@@ -45,12 +52,11 @@ to move-wolf  ; wolf move procedure
     fd 1
     stop
   ] 
-  if not has-wolves-neighbor [
+  ifelse not has-wolves-neighbor [
     ; if there are any sheep and wolves nearby move random
     move
-    stop
   ]
-  if has-wolves-neighbor [
+  [
     ; get the closest wolf and move in opposite direction
     let closest-wolf min-one-of other wolves in-radius 3 [distance myself]
     move-opposite closest-wolf
